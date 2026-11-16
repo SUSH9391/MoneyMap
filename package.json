@@ -5,7 +5,11 @@
   "main": "index.js",
   "scripts": {
     "dev": "tsx watch src/index.ts",
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "build":"tsc",
+    "start":"node dist/index.js",
+    "db:migrate" : "prisma migrate dev",
+    "db:seed": "tsx prisma/seed.ts",
+    "test": "NODE_OPTIONS=--experimental-vm-modules jest",
     "postinstall": "prisma skills sync || exit 0",
     "contract:emit": "prisma contract emit"
   },
@@ -43,5 +47,8 @@
     "prisma": "^8.0.0-rc.33",
     "tsx": "^4.23.15",
     "typescript": "^7.0.2"
+  },
+  "prisma":{
+    "seed" : "tsx prisma/seed.ts"
   }
 }
