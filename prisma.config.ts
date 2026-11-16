@@ -6,7 +6,9 @@ export default definePrismaConfig({
   orm: ormConfig({
     contract: "prisma/contract.prisma",
     db: {
-      connection: process.env['DATABASE_URL']!,
+      connection: (globalThis as typeof globalThis & {
+        process?: { env?: Record<string, string | undefined> };
+      }).process?.env?.['DATABASE_URL']!,
     },
     migrations: {
       dir: "prisma/migrations",
