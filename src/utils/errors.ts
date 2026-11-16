@@ -1,52 +1,48 @@
 export class AppError extends Error {
     constructor(
-        message:string,
-        public statusCode: number = 500
+        message: string,
+        public readonly statusCode: number = 500
     ){
         super(message);
-        this.name = "AppError";// server side error
-    }
-}
-//all of these below are client side error
-export class NotFoundError extends AppError{
-    constructor(
-        message: string = 'Resource not found'
-    ){
-        super(message,404);
+        this.name = new.target.name;
     }
 }
 
-export class ValidationError extends AppError{
+export class NotFoundError extends AppError {
+    constructor(
+        message: string = "Resource not found"
+    ) {
+        super(message, 404);
+    }
+}
+
+export class ValidationError extends AppError {
     constructor(
         message: string,
-        public details?: any //any datatype
-    )
-    {
-        super(message,400);//client side error
+        public readonly details?: unknown
+    ) {
+        super(message, 400);
     }
 }
 
-export class UnauthorizedError extends AppError{
+export class UnauthorizedError extends AppError {
     constructor(
-        message: string = 'Unauthorized' //not logged in
-    ){
-        super(message,401);
+        message: string = "Unauthorized"
+    ) {
+        super(message, 401);
     }
 }
 
-export class ConflictError extends AppError{
-    constructor(
-        message:string
-    ){
-        super(message,409);
+export class ConflictError extends AppError {
+    constructor(message: string) {
+        super(message, 409);
     }
 }
 
-export class ForbiddenError extends AppError{
+export class ForbiddenError extends AppError {
     constructor(
-        message:string = 'Forbidden'
-    )
-    {
-        super(message,403)
+        message: string = "Forbidden"
+    ) {
+        super(message, 403);
     }
 }
