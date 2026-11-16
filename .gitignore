@@ -3,3 +3,12 @@ dist
 .env
 node_modules/
 dist/
+.env.local
+.env.*.local
+logs/
+*.log
+.vscode/
+/idea/
+.DS_Store
+*.tmp
+/src/generated/prisma-client
