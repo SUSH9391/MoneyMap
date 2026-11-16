@@ -1,33 +1,34 @@
-import type { ErrorRequestHandler, RequestHandler } from "express";
-import { AppError, NotFoundError, ValidationError } from "../utils/errors";
+import{Request, Response, NextFunction} from 'express';
+import {AppError, ValidationError} from '../../src/utils/errors';
 
-export const notFoundHandler: RequestHandler = (req, _res, next) => {
-    next(new NotFoundError(`Route ${req.method} ${req.originalUrl} not found`));
-};
-
-export const errorHandler: ErrorRequestHandler = (error, _req, res, _next) => {
-    const isAppError = error instanceof AppError;
-    const statusCode = isAppError ? error.statusCode : 500;
-    const isProduction = process.env.NODE_ENV === "production";
-
-    if (statusCode >= 500) {
-        console.error(error);
+export const errorHandler = (
+    err : Error,
+    req: Request,
+    res: Response,
+    next: NextFunction
+) => {
+    if (err instanceof SyntaxError && 'body' in err){ // if the req body has syntax mistakes or any forigen items
+        return res.status(400).json({
+            success:false,
+            message:'Invalid JSON payload'
+        })
     }
-
-    const message =
-        statusCode >= 500 && isProduction
-            ? "Internal server error"
-            : isAppError
-              ? error.message
-              : error instanceof Error
-                ? error.message
-                : "Internal server error";
-
-    res.status(statusCode).json({
-        success: false,
-        message,
-        ...(error instanceof ValidationError && error.details !== undefined
-            ? { details: error.details }
-            : {}),
-    });
-};
+    if (err instanceof ValidationError) {
+        return res.status(err.statusCode).json({
+            success:false,
+            message: err.message,
+            errors: err.details,
+        })
+    }
+    if (err instanceof AppError){
+        return res.status(err.statusCode).json({
+            success:false,
+            message:err.message
+        })
+    }
+    console.error('Error:',err);
+    return res.status(500).json({
+        success:false,
+        message:'Internal server error'
+    })
+}
