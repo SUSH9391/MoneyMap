@@ -1,19 +1,195 @@
+
 // use prisma-8
 
-
 model User {
-  id        Int                @id @default(autoincrement())
-  email     String             @unique
-  createdAt DateTime           @default(now()) @onCreate(now())
-  updatedAt temporal.UpdatedAt
+  id             String   @id @onCreate(uuid())
+  email          String   @unique
+  password       String
+  firstName      String?
+  lastName       String?
+  displayName    String?
+  avatarUrl      String?
+  isDiscoverable Boolean  @default(true)
+  onboardingDone Boolean  @default(false)
+
+  createdAt DateTime(storage: timestamp) @default(now())
+  updatedAt DateTime(storage: timestamp) @onCreate(now()) @onUpdate(now())
+
+  budgets              Budget[]
+  categories           Category[]
+  receipts             Receipt[]
+  transactions         Transaction[]
+  sharedItems          SharedReceiptItem[] @relation("SharedBy")
+  receivedItems        SharedReceiptItem[] @relation("SharedWith")
+  refreshTokens        RefreshToken[]
+  passwordResetTokens  PasswordResetToken[]
+
+  @@map("users")
 }
 
-model Post {
-  id        Int                @id @default(autoincrement())
-  title     String
-  content   String?
-  author    User               @relation(fields: [authorId], references: [id])
-  authorId  Int
-  createdAt DateTime           @default(now()) @onCreate(now())
-  updatedAt temporal.UpdatedAt
+model RefreshToken {
+  id        String   @id @onCreate(uuid())
+  tokenHash String   @unique
+  userId    String
+  expiresAt DateTime(storage: timestamp)
+  isRevoked Boolean  @default(false)
+
+  createdAt DateTime(storage: timestamp) @default(now())
+  updatedAt DateTime(storage: timestamp) @onCreate(now()) @onUpdate(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([expiresAt])
+  @@map("refresh_tokens")
+}
+
+model PasswordResetToken {
+  id        String   @id @onCreate(uuid())
+  tokenHash String   @unique
+  userId    String
+  expiresAt DateTime(storage: timestamp)
+  usedAt    DateTime(storage: timestamp)?
+
+  createdAt DateTime(storage: timestamp) @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("password_reset_tokens")
+}
+
+model Category {
+  id        String  @id @onCreate(uuid())
+  userId    String?
+  name      String
+  type      String  @default("expense")
+  color     String?
+  icon      String?
+  isDefault Boolean @default(false)
+
+  createdAt DateTime(storage: timestamp) @default(now())
+  updatedAt DateTime(storage: timestamp) @onCreate(now()) @onUpdate(now())
+
+  user         User?         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  budgets      Budget[]
+  transactions Transaction[]
+
+  @@index([userId])
+  @@index([isDefault])
+  @@map("categories")
+}
+
+model Budget {
+  id         String  @id @onCreate(uuid())
+  userId     String
+  categoryId String
+  name       String
+  amount     Decimal(precision: 10, scale: 2)
+  currency   String  @default("USD")
+  period     String
+  startDate  DateTime(storage: timestamp)
+  endDate    DateTime(storage: timestamp)?
+  isActive   Boolean @default(true)
+
+  createdAt DateTime(storage: timestamp) @default(now())
+  updatedAt DateTime(storage: timestamp) @onCreate(now()) @onUpdate(now())
+
+  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  category     Category      @relation(fields: [categoryId], references: [id])
+  transactions Transaction[]
+
+  @@index([userId])
+  @@index([categoryId])
+  @@index([isActive])
+  @@map("budgets")
+}
+
+model Receipt {
+  id          String  @id @onCreate(uuid())
+  userId      String
+  storeName   String?
+  receiptDate DateTime(storage: timestamp)
+  totalAmount Decimal(precision: 10, scale: 2)
+  tax         Decimal(precision: 10, scale: 2)?
+  imageUrl    String
+  status      String  @default("pending")
+
+  createdAt DateTime(storage: timestamp) @default(now())
+  updatedAt DateTime(storage: timestamp) @onCreate(now()) @onUpdate(now())
+
+  user  User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  items ReceiptItem[]
+
+  @@index([userId])
+  @@index([status])
+  @@map("receipts")
+}
+
+model ReceiptItem {
+  id         String  @id @onCreate(uuid())
+  receiptId  String
+  name       String
+  quantity   Decimal(precision: 10, scale: 3) @default(1)
+  price      Decimal(precision: 10, scale: 2)
+  totalPrice Decimal(precision: 10, scale: 2)
+
+  createdAt DateTime(storage: timestamp) @default(now())
+  updatedAt DateTime(storage: timestamp) @onCreate(now()) @onUpdate(now())
+
+  receipt     Receipt             @relation(fields: [receiptId], references: [id], onDelete: Cascade)
+  transaction Transaction?
+  sharedItems SharedReceiptItem[]
+
+  @@index([receiptId])
+  @@map("receipt_items")
+}
+
+model SharedReceiptItem {
+  id            String  @id @onCreate(uuid())
+  receiptItemId String
+  sharedById    String
+  sharedWithId  String
+  splitAmount   Decimal(precision: 10, scale: 2)
+  status        String  @default("pending")
+
+  createdAt DateTime(storage: timestamp) @default(now())
+  updatedAt DateTime(storage: timestamp) @onCreate(now()) @onUpdate(now())
+
+  receiptItem ReceiptItem @relation(fields: [receiptItemId], references: [id], onDelete: Cascade)
+  sharedBy    User        @relation("SharedBy", fields: [sharedById], references: [id])
+  sharedWith  User        @relation("SharedWith", fields: [sharedWithId], references: [id])
+
+  @@index([receiptItemId])
+  @@index([sharedById])
+  @@index([sharedWithId])
+  @@index([status])
+  @@map("shared_receipt_items")
+}
+
+model Transaction {
+  id            String  @id @onCreate(uuid())
+  userId        String
+  budgetId      String?
+  categoryId    String
+  receiptItemId String? @unique
+  type          String  @default("expense")
+  amount        Decimal(precision: 10, scale: 2)
+  description   String?
+  date          DateTime(storage: timestamp) @default(now())
+
+  createdAt DateTime(storage: timestamp) @default(now())
+  updatedAt DateTime(storage: timestamp) @onCreate(now()) @onUpdate(now())
+
+  user        User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  budget      Budget?      @relation(fields: [budgetId], references: [id], onDelete: SetNull)
+  category    Category     @relation(fields: [categoryId], references: [id])
+  receiptItem ReceiptItem? @relation(fields: [receiptItemId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+  @@index([budgetId])
+  @@index([categoryId])
+  @@index([date])
+  @@index([type])
+  @@map("transactions")
 }
