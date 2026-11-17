@@ -10,3 +10,4 @@ export const db = postgres({
   contract,
   url: process.env['DATABASE_URL']!,
 });
+export default db;// making it callable from other files in the project
