@@ -1,0 +1,30 @@
+// this is a  zod schema for input validation
+import { optional, z } from 'zod';
+export const registerSchema = z.object({
+    email: z.email('Invalid email address'),
+    password: z.string()
+        .min(6, 'Password must be at least 6 characters')
+        .max(100, 'Password must be less than 100 characters'),
+    firstname: z.string().optional(),
+    lastname: z.string().optional()
+});
+
+export const loginSchema = z.object({
+    email: z.email('Invalid email address'),
+    password: z.string().min(1, 'Password is required'),
+});
+
+export const refreshTokenSchema = z.object({
+    refreshToken: z.string().min(1, 'Refresh token is refuired')
+})
+
+export const forgotPasswordSchema = z.object({
+    email: z.email('Invalid email address')
+})
+
+export const resetPasswordSchema = z.object({
+    token: z.string().min(1, 'Reset token is required'),
+    newPassword: z.string()
+        .min(6, 'Password must be at least 6 characters')
+        .max(100, 'Password must be less than 100 characters'),
+})
