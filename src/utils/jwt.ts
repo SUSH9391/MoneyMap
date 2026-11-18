@@ -20,7 +20,7 @@ export const signAccessToken = (payload: JwtPayload) => {
  * verify the access token and decode the payload
  * throw if the token is invalid or expired
  */
-export const verifyAccessToken = (token: string) => {
+export const verifyToken = (token: string) => {
     if(!config.jwtSecret){
         throw new Error("JWT_SECRET is not defined")
     }
