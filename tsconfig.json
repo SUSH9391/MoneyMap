@@ -46,5 +46,6 @@
     "moduleResolution": "bundler",
     "resolveJsonModule": true,
   },
-  "include": ["**/*"]
+  "include": ["**/*"],
+  "exclude": ["node_modules", "dist", "prisma/migrations"]
 }
