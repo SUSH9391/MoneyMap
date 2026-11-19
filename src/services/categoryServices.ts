@@ -56,7 +56,7 @@ class CategoryService {
             },
         });
     }
-        async delete(id:string, userId: string, data: CreateCategoryData){
+        async delete(id:string, userId: string){
             const category = await db.orm.public.Category.whereUnique({id}).first();
             if(!category) throw new NotFoundError('Category not found');
             if (category.isDefault) throw new ForbiddenError('Cannot modify default categories');
