@@ -61,7 +61,7 @@ class CategoryService {
             if(!category) throw new NotFoundError('Category not found');
             if (category.isDefault) throw new ForbiddenError('Cannot modify default categories');
             if(category.userId !== userId) throw new ForbiddenError('Access Denied');
-            await db.orm.public.Category.whereUnique({id}).delete({id})
+            await db.orm.public.Category.whereUnique({id}).delete()
         }
 }
 export default new CategoryService;
