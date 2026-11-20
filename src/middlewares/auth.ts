@@ -29,6 +29,7 @@ export const authenticate = (
         }
         const decoded = verifyToken(token);
         req.user = decoded;
+        next();
     } catch (error) {
         if (error instanceof UnauthorizedError) {
             next(error);
