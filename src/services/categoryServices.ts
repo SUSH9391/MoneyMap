@@ -1,6 +1,7 @@
 //business logic for the category and what is the services that this app is providing for the client
 import { db } from "../../prisma/db"; //db.orm.public...
 import { NotFoundError, ForbiddenError } from "../utils/errors";
+import { or } from "@prisma/orm-postgres/orm-client";
 
 // build interfaces in this schema defining the datastructure of the interfaces
 
@@ -22,12 +23,16 @@ interface UpdateCategoryData {
 
 class CategoryService {
     async findAll(userId: string) {
-        return (db.orm.public.Category as any).findMany({
-            where: {
-                OR: [{ isDefault: true }, { userId }],
-            },
-            orderBy: [{ isDefault: 'desc' }, { name: 'asc' }],
-        });
+        const categories = await db.orm.public.Category
+            .where((category) =>
+                or(category.isDefault.eq(true), category.userId.eq(userId)),
+            )
+            .orderBy((category) => category.name.asc())
+            .all();
+
+        return categories.sort(
+            (left, right) => Number(right.isDefault) - Number(left.isDefault),
+        );
     }
     async create(data: CreateCategoryData) {
         return db.orm.public.Category.create({
@@ -46,15 +51,14 @@ class CategoryService {
         if (!category) throw new NotFoundError('Category not found');
         if (category.isDefault) throw new ForbiddenError('Cannot modify default categories');
         if (category.userId !== userId) throw new ForbiddenError('Access denied');
-        return (db.orm.public.Category as any).update({
-            where: { id },
-            data: {
+        return db.orm.public.Category
+            .where({ id })
+            .update({
                 ...(data.name !== undefined && { name: data.name }),
                 ...(data.type !== undefined && { type: data.type }),
                 ...(data.color !== undefined && { color: data.color }),
                 ...(data.icon !== undefined && { icon: data.icon }),
-            },
-        });
+            });
     }
         async delete(id:string, userId: string){
             const category = await db.orm.public.Category.whereUnique({id}).first();
