@@ -8,7 +8,7 @@
     "source": "HTTPie Desktop 2025.2.0"
   },
   "entry": {
-    "name": "ledgernest-backend-testsuite",
+    "name": "MoneyMap Backend Tests",
     "icon": {
       "name": "rocket",
       "color": "green"
