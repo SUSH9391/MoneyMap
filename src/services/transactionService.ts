@@ -90,6 +90,10 @@ class TransactionService {
 
   // Create a transaction
   async create(data: CreateTransactionData) {
+    if (data.budgetId) {
+      await this.ensureBudgetAccess(data.budgetId, data.userId);
+    }
+
     const created = await db.orm.public.Transaction.create({
       userId: data.userId,
       categoryId: data.categoryId,
@@ -127,6 +131,10 @@ class TransactionService {
 
     if (transaction.userId !== userId) {
       throw new ForbiddenError("Access denied");
+    }
+
+    if (data.budgetId) {
+      await this.ensureBudgetAccess(data.budgetId, userId);
     }
 
     const updated = await db.orm.public.Transaction
@@ -181,6 +189,20 @@ class TransactionService {
     await db.orm.public.Transaction
       .whereUnique({ id })
       .delete();
+  }
+
+  private async ensureBudgetAccess(budgetId: string, userId: string) {
+    const budget = await db.orm.public.Budget
+      .whereUnique({ id: budgetId })
+      .first();
+
+    if (!budget) {
+      throw new NotFoundError("Budget does not exist");
+    }
+
+    if (budget.userId !== userId) {
+      throw new ForbiddenError("Access denied");
+    }
   }
 }
 
